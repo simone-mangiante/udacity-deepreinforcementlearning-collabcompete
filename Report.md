@@ -8,15 +8,13 @@ The actor takes alternatively the observed state from each of the player and pre
 The critic takes all the states observed by both agents and all the actions, as explained in the above paper.
 The experience replay is shared between the two players.
 
-
 The models for actor and critic are a set of 2 fully connected layers of 256 nodes:
-
+- the actor takes the the state size as input and outputs the best likely action (for a single agent)
+- the critic processes states and actions from all the agents to output their Q-value
 
 The agent makes use of an experience replay buffer from where it randomly samples previous `(state, action, reward, next_state)` tuples to build the batch for training.
 
 ### Parameters
-The actor and critic network are made of two hidden fully connected layers of 256 and 128 nodes respectively.
-
 Other parameters for the DDPG agent are:
 - Replay buffer size: `100000`
 - Minibatch size: `128`
@@ -26,22 +24,24 @@ Other parameters for the DDPG agent are:
 - Learning rate of the critic: `0.001`
 - Weight decay: `0`
 
-After trying some different values, I decided to keep them as set by the DDPG agent explained in the lesson.
+I used an implementation of Ornstein-Uhlenbeck Noise from a previous project (derived from [here](https://github.com/floodsung/DDPG/blob/master/ou_noise.py)) with decay to favour exploitation over exploration as the training progresses.
+I also set gradient clipping to 1.
 
-I did not introduce a gradient clipping like suggested in the project introduction because it did not yield any improvement during training.
+The size of the hidden layers in the actor and critic models seemed very important because the agents could not learn with smaller fully connected layers.
+No weight decay and a relatively high `tau` (compared to the paper) played a significant role in making the multi-agent setup learn properly.
 
 ## Results
 By using the same actor to train both players I managed to get results relatively faster than expected.
-The environment was solved in 140 episodes, although the multi-agent setup shows instability and the DPPG agent sometimes takes longer or does not learn anything at all.
+The environment was solved in 521 episodes, although the multi-agent setup shows instability and the DPPG agent sometimes takes longer or does not learn anything at all.
 Below is the plot of scores in training episodes.
 
 ![](test.png)
 
-Scores of 3 runs using the fully trained model: `[39.17849912429229, 38.85649913148954, 39.13799912519753]`
+Scores of 3 runs using the fully trained model: `[1.4000000208616257, 0.9000000134110451, 0.10000000149011612]`
 
 ## Future work
 Plans for improving my results include:
-- implement suggestions from the project introduction, like being less aggressive in updates per step
-- improve the actor and critic networks by adding batch normalisation or changing the architecture
+- implement batch normalisation as suggested by other papers
+- run multiple learning loops for the same sample experience: it may improve the overall score and make learning even faster
 - try out different algorithms like PPO
  
